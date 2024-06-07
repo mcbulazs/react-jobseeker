@@ -3,7 +3,11 @@ import { useJobQuery } from "../store/api/jobsApiSlice";
 import { getJobTypeString } from "../utils/utils";
 import { selectLoggedInUser } from "../store/authSlice/authSlice";
 import { useSelector } from "react-redux";
-import { useApplyForJobMutation } from "../store/api/applicantsApiSlice";
+import {
+	useApplyForJobMutation,
+	useApplicantsForJobQuery,
+} from "../store/api/applicantsApiSlice";
+import Applicants from "../components/profile/Applicants";
 
 const JobView = () => {
 	const { jobId } = useParams();
@@ -14,9 +18,13 @@ const JobView = () => {
 		return <div>Loading...</div>;
 	}
 	const job = result.data;
-	console.log(job);
 	const applyForJob = async () => {
 		const response = await applyForJobMutate(parseInt(jobId));
+		if (response.error) {
+			alert("már jelentkeztél erre az állásra");
+			return;
+		}
+		alert("Sikeres jelentkezés");
 	};
 	return (
 		<div>
@@ -94,6 +102,12 @@ const JobView = () => {
 					</tr>
 				</tbody>
 			</table>
+			{user?.role == "company" && (
+				<div className="w-2/3 m-auto mt-10">
+					<h2 className="text-2xl">Jelentkezők</h2>
+					<Applicants jobId={job.id} />
+				</div>
+			)}
 		</div>
 	);
 };

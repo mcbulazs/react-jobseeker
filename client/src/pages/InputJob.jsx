@@ -6,13 +6,14 @@ import {
 	useCreateJobMutation,
 	useModifyJobMutation,
 } from "../store/api/jobsApiSlice";
+import Slider from "@mui/material/Slider";
 
 const defaultValues = {
 	company: "",
 	position: "",
 	description: "",
-	salaryFrom: 0,
-	salaryTo: 0,
+	salaryFrom: 750000,
+	salaryTo: 1500000,
 	type: "full-time",
 	city: "",
 	homeOffice: false,
@@ -26,6 +27,10 @@ const InputJob = () => {
 	const [createJobMutate] = useCreateJobMutation(values);
 	const [modifyJobMutate] = useModifyJobMutation(values);
 	const navigate = useNavigate();
+	if (!user || user.role !== "company") {
+		navigate("/");
+	}
+
 	const addJob = async () => {
 		const response = await createJobMutate(job);
 		navigate("/profile", { state: {} });
@@ -69,28 +74,18 @@ const InputJob = () => {
 						onChange={(e) => setJob({ ...job, description: e.target.value })}
 					></textarea>
 					<label>Salary</label>
-					<div className="flex gap-10">
-						<input
-							type="number"
-							name="salaryFrom"
-							placeholder="Salary From"
-							className="w-full p-2 my-2 border border-gray-300 rounded"
-							defaultValue={values.salaryFrom}
-							onChange={(e) =>
-								setJob({ ...job, salaryFrom: parseInt(e.target.value) })
-							}
-						/>
-						<input
-							type="number"
-							name="salaryTo"
-							placeholder="Salary To"
-							className="w-full p-2 my-2 border border-gray-300 rounded"
-							defaultValue={values.salaryTo}
-							onChange={(e) =>
-								setJob({ ...job, salaryTo: parseInt(e.target.value) })
-							}
-						/>
-					</div>
+					<Slider
+						min={250000}
+						max={2000000}
+						marks={true}
+						step={10000}
+						getAriaLabel={() => "Salary range"}
+						defaultValue={[values.salaryFrom, values.salaryTo]}
+						valueLabelDisplay="auto"
+						onChange={(e, value) =>
+							setJob({ ...job, salaryFrom: value[0], salaryTo: value[1] })
+						}
+					/>
 					<label>Type</label>
 					<select
 						name="type"

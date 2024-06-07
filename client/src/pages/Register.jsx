@@ -45,7 +45,9 @@ const Register = () => {
 		dispatch(
 			login({
 				email: loginResponse.user.email,
+				fullname: loginResponse.user.fullname,
 				id: loginResponse.user.id,
+				role: loginResponse.user.role,
 				token: loginResponse.accessToken,
 			}),
 		);

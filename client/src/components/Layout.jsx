@@ -14,6 +14,9 @@ const Layout = () => {
 				</NavLink>
 				{!user && <NavLink to="register">Regisztráció</NavLink>}
 				{!user && <NavLink to="login">Bejelentkezés</NavLink>}
+				{user && user.role == "company" && (
+					<NavLink to="inputjob">Állás hozzáadása</NavLink>
+				)}
 				{user && <NavLink to="profile">Profilom</NavLink>}
 				{user && (
 					<NavLink to="/" onClick={() => dispatch(logout())}>

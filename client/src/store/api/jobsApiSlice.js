@@ -27,6 +27,7 @@ export const jobsApiSlice = createApi({
 				method: "GET",
 			}),
 		}),
+		
 		jobsByUser: builder.query({
 			query: (userId) => ({
 				url: `jobs?userId=${userId}`,
@@ -59,12 +60,33 @@ export const jobsApiSlice = createApi({
 				method: "DELETE",
 			}),
 		}),
+		jobsFiltered: builder.query({ //nem hasznalom mert nem lehet multichoice
+			query: (props) => {
+				const s = Object.keys(props).map((key) => {
+					if (!props[key]) {
+						return ''
+					}     
+					return `${key}=${props[key]}`
+				})
+				return ({
+				url: `jobs?${s}`,
+				method: "GET",
+			})},
+		}),
+		jobsSkipLimit: builder.query({
+			query: ({limit, skip}) => ({
+				url: `jobs?$limit=${limit}&$skip=${skip}`,
+				method: "GET",
+			}),
+		}),
 	}),
 });
 
 export const {
 	useJobQuery,
+	useJobsFilteredQuery,
 	useCreateJobMutation,
+	useJobsSkipLimitQuery,
 	useJobsByUserQuery,
 	useAllJobsQuery,
 	useModifyJobMutation,
