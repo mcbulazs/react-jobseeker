@@ -33,7 +33,11 @@ const Home = () => {
 
 	useEffect(() => {
 		if (data?.data) {
-			setJobs((prevJobs) => [...prevJobs, ...data.data]);
+			setJobs((prevJobs) => {
+                const newJobs = [...prevJobs, ...data.data];
+                // Ensure no duplicates
+                return Array.from(new Set(newJobs.map(job => job.id))).map(id => newJobs.find(job => job.id === id));
+            });
 			if (data.data.length < PAGE_SIZE) {
 				setHasMore(false);
 			}
