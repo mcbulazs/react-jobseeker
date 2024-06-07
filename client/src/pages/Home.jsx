@@ -1,7 +1,10 @@
 import JobView from "../pages/JobView";
 import { Link } from "react-router-dom";
-import { useState } from "react";
-import { useAllJobsQuery } from "../store/api/jobsApiSlice";
+import { useState, useEffect, useCallback } from "react";
+import {
+	useAllJobsQuery,
+	useJobsSkipLimitQuery,
+} from "../store/api/jobsApiSlice";
 import Filter from "../components/home/Filter";
 
 const defaultValues = {
@@ -12,28 +15,57 @@ const defaultValues = {
 	homeOffice: null,
 	search: null,
 };
-
+const PAGE_SIZE = 10;
 const Home = () => {
 	const [filter, setFilter] = useState(defaultValues);
 	const [filterOpen, setFilterOpen] = useState(false);
 	const [filteredJobs, setFilteredJobs] = useState(null);
 
-	const [jobs, setJobs] = useState(null);
+	const [hasMore, setHasMore] = useState(true);
+	const [isFetching, setIsFetching] = useState(false);
+	const [page, setPage] = useState(0);
 
-	const allJobsQuery = useAllJobsQuery();
-	if (allJobsQuery.isLoading) {
-		return <div>Loading...</div>;
-	}
-	const allJobs = allJobsQuery.data.data;
+	const [jobs, setJobs] = useState([]);
+	const { data, error, isLoading } = useJobsSkipLimitQuery({
+		limit: PAGE_SIZE,
+		skip: page * PAGE_SIZE,
+	});
 
-	const filterJobs = () => {
-		allJobsQuery.refetch();
+	useEffect(() => {
+		if (data?.data) {
+			setJobs((prevJobs) => [...prevJobs, ...data.data]);
+			if (data.data.length < PAGE_SIZE) {
+				setHasMore(false);
+			}
+			setIsFetching(false);
+		}
+	}, [data]);
+
+	const handleScroll = useCallback(() => {
+		if (
+			window.innerHeight + document.documentElement.scrollTop !==
+				document.documentElement.offsetHeight ||
+			isLoading ||
+			!hasMore ||
+			isFetching
+		) {
+			return;
+		}
+		setIsFetching(true);
+		setPage((prevPage) => prevPage + 1);
+	}, [isLoading, hasMore, isFetching]);
+
+	useEffect(() => {
+		window.addEventListener("scroll", handleScroll);
+		return () => window.removeEventListener("scroll", handleScroll);
+	}, [handleScroll]);
+	const filterJobs = useCallback(() => {
 		setFilteredJobs(
-			allJobs.filter((job) => {
+			jobs.filter((job) => {
 				if (
 					filter.search &&
-					!job.company.includes(filter.search) &&
-					!job.position.includes(filter.search)
+					!job.company.toLowerCase().includes(filter.search.toLowerCase()) &&
+					!job.position.toLowerCase().includes(filter.search.toLowerCase())
 				) {
 					return false;
 				}
@@ -43,19 +75,27 @@ const Home = () => {
 				if (filter.salaryTo && job.salaryTo > filter.salaryTo) {
 					return false;
 				}
-				if (filter.type == [] && !filter.type.includes(job.type)) {
+				if (filter.type.length && !filter.type.includes(job.type)) {
 					return false;
 				}
 				if (filter.city && !job.city.includes(filter.city)) {
 					return false;
 				}
-				if (filter.homeOffice && job.homeOffice != filter.homeOffice) {
+				if (
+					filter.homeOffice !== null &&
+					job.homeOffice !== filter.homeOffice
+				) {
 					return false;
 				}
 				return true;
 			}),
 		);
-	};
+	}, [filter, jobs]);
+
+	useEffect(() => {
+		filterJobs();
+	}, [jobs, filter]);
+
 	return (
 		<div className="">
 			<h1 className="w-full flex px-10 items-center h-24 text-4xl font-bold shadow-md">
@@ -74,7 +114,7 @@ const Home = () => {
 								search: e.target.value === "" ? null : e.target.value,
 							})
 						}
-						onKeyPress={(e) => {
+						onKeyDown={(e) => {
 							if (e.key === "Enter") {
 								filterJobs();
 							}
@@ -101,7 +141,7 @@ const Home = () => {
 					</div>
 				</div>
 				<div>
-					{(filteredJobs ?? allJobs).map((job) => (
+					{filteredJobs?.map((job) => (
 						<Link to={`/jobs/${job.id}`} key={job.id}>
 							<div className="flex justify-between p-3 my-2 gap-2 border border-gray-300 rounded">
 								<div className="flex flex-col justify-between">
